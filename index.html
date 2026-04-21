@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Profit Margin Calculator</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: { 50: '#f0fdf4', 100: '#dcfce7', 500: '#22c55e', 600: '#16a34a', 700: '#15803d' }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-gray-950 min-h-screen flex items-center justify-center px-4 py-12 font-sans">
+
+  <div class="w-full max-w-md">
+
+    <!-- Logo / Title -->
+    <div class="text-center mb-10">
+      <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-brand-600 mb-4 shadow-lg shadow-brand-600/30">
+        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+        </svg>
+      </div>
+      <h1 class="text-2xl font-bold text-white tracking-tight">Profit Margin Calculator</h1>
+      <p class="text-gray-500 text-sm mt-1">Enter your revenue and costs to see your margin instantly.</p>
+    </div>
+
+    <!-- Card -->
+    <div class="bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl p-6 sm:p-8">
+
+      <!-- Inputs -->
+      <div class="space-y-5 mb-8">
+        <div>
+          <label class="block text-sm font-medium text-gray-400 mb-2">Total Revenue</label>
+          <div class="relative">
+            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium select-none">$</span>
+            <input id="revenue" type="number" min="0" step="any" placeholder="0.00" oninput="calculate()"
+              class="w-full bg-gray-800 border border-gray-700 text-white text-lg font-semibold rounded-xl
+                     pl-8 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent
+                     placeholder-gray-600 transition-all" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-400 mb-2">Total Costs</label>
+          <div class="relative">
+            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium select-none">$</span>
+            <input id="costs" type="number" min="0" step="any" placeholder="0.00" oninput="calculate()"
+              class="w-full bg-gray-800 border border-gray-700 text-white text-lg font-semibold rounded-xl
+                     pl-8 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent
+                     placeholder-gray-600 transition-all" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Divider -->
+      <div class="border-t border-gray-800 mb-8"></div>
+
+      <!-- Results -->
+      <div class="space-y-4">
+
+        <!-- Profit -->
+        <div class="flex items-center justify-between">
+          <span class="text-gray-400 text-sm font-medium">Gross Profit</span>
+          <span id="profit-val" class="text-white font-bold text-xl tabular-nums">—</span>
+        </div>
+
+        <!-- Margin -->
+        <div class="flex items-center justify-between">
+          <span class="text-gray-400 text-sm font-medium">Profit Margin</span>
+          <span id="margin-val" class="font-bold text-xl tabular-nums text-gray-500">—</span>
+        </div>
+
+        <!-- Visual bar -->
+        <div id="bar-wrap" class="hidden mt-2">
+          <div class="w-full bg-gray-800 rounded-full h-2.5 overflow-hidden">
+            <div id="bar" class="h-2.5 rounded-full transition-all duration-500 bg-brand-500"></div>
+          </div>
+          <div class="flex justify-between text-xs text-gray-600 mt-1">
+            <span>0%</span>
+            <span>50%</span>
+            <span>100%</span>
+          </div>
+        </div>
+
+        <!-- Status badge -->
+        <div id="badge-wrap" class="hidden pt-1">
+          <span id="badge" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold"></span>
+        </div>
+      </div>
+
+      <!-- Reset -->
+      <button onclick="reset()"
+        class="mt-8 w-full border border-gray-700 text-gray-400 hover:text-white hover:border-gray-500
+               rounded-xl py-2.5 text-sm font-medium transition-all">
+        Clear
+      </button>
+    </div>
+
+    <p class="text-center text-gray-700 text-xs mt-6">Ref: AIAI-9989AH</p>
+  </div>
+
+<script>
+  const fmt = n => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 }).format(n);
+
+  function calculate() {
+    const rev  = parseFloat(document.getElementById('revenue').value);
+    const cost = parseFloat(document.getElementById('costs').value);
+
+    const profitEl  = document.getElementById('profit-val');
+    const marginEl  = document.getElementById('margin-val');
+    const barWrap   = document.getElementById('bar-wrap');
+    const bar       = document.getElementById('bar');
+    const badgeWrap = document.getElementById('badge-wrap');
+    const badge     = document.getElementById('badge');
+
+    if (isNaN(rev) && isNaN(cost)) { resetDisplay(); return; }
+
+    const r = isNaN(rev)  ? 0 : rev;
+    const c = isNaN(cost) ? 0 : cost;
+    const profit = r - c;
+    const margin = r !== 0 ? (profit / r) * 100 : null;
+
+    // Profit
+    profitEl.textContent = fmt(profit);
+    if (profit > 0)      profitEl.className = 'text-brand-500 font-bold text-xl tabular-nums';
+    else if (profit < 0) profitEl.className = 'text-red-400 font-bold text-xl tabular-nums';
+    else                 profitEl.className = 'text-white font-bold text-xl tabular-nums';
+
+    // Margin
+    if (margin !== null) {
+      marginEl.textContent = margin.toFixed(1) + '%';
+      if (margin >= 20)       marginEl.className = 'text-brand-500 font-bold text-xl tabular-nums';
+      else if (margin >= 0)   marginEl.className = 'text-amber-400 font-bold text-xl tabular-nums';
+      else                    marginEl.className = 'text-red-400 font-bold text-xl tabular-nums';
+
+      // Bar
+      const pct = Math.max(0, Math.min(100, margin));
+      bar.style.width = pct + '%';
+      if (margin >= 20)       bar.className = 'h-2.5 rounded-full transition-all duration-500 bg-brand-500';
+      else if (margin >= 0)   bar.className = 'h-2.5 rounded-full transition-all duration-500 bg-amber-400';
+      else                    bar.className = 'h-2.5 rounded-full transition-all duration-500 bg-red-400';
+      barWrap.classList.remove('hidden');
+
+      // Badge
+      badgeWrap.classList.remove('hidden');
+      if (margin >= 20) {
+        badge.textContent = '✓ Healthy margin';
+        badge.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-brand-600/20 text-brand-400';
+      } else if (margin >= 10) {
+        badge.textContent = '⚠ Low margin';
+        badge.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/15 text-amber-400';
+      } else if (margin >= 0) {
+        badge.textContent = '⚠ Very low margin';
+        badge.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/15 text-amber-400';
+      } else {
+        badge.textContent = '✕ Operating at a loss';
+        badge.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-red-500/15 text-red-400';
+      }
+    } else {
+      marginEl.textContent = '—';
+      marginEl.className = 'text-gray-500 font-bold text-xl tabular-nums';
+      barWrap.classList.add('hidden');
+      badgeWrap.classList.add('hidden');
+    }
+  }
+
+  function resetDisplay() {
+    document.getElementById('profit-val').textContent = '—';
+    document.getElementById('profit-val').className = 'text-white font-bold text-xl tabular-nums';
+    document.getElementById('margin-val').textContent = '—';
+    document.getElementById('margin-val').className = 'text-gray-500 font-bold text-xl tabular-nums';
+    document.getElementById('bar-wrap').classList.add('hidden');
+    document.getElementById('badge-wrap').classList.add('hidden');
+  }
+
+  function reset() {
+    document.getElementById('revenue').value = '';
+    document.getElementById('costs').value = '';
+    resetDisplay();
+    document.getElementById('revenue').focus();
+  }
+</script>
+</body>
+</html>
