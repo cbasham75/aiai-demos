@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>APR Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body class="bg-slate-50 min-h-screen">
+
+    <!-- Header -->
+    <header class="bg-blue-900 shadow-lg">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 py-4 flex items-center gap-3">
+            <div class="bg-blue-700 rounded-lg p-2.5 flex-shrink-0">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                </svg>
+            </div>
+            <div>
+                <h1 class="text-white font-bold text-lg leading-tight">APR Calculator</h1>
+                <p class="text-blue-300 text-xs">Mortgages &amp; Simple Interest Loans</p>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-5xl mx-auto px-4 sm:px-6 py-6">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+            <!-- CALCULATOR CARD -->
+            <div class="bg-white rounded-xl border border-gray-200 shadow-sm">
+                <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 rounded-t-xl">
+                    <h2 class="font-semibold text-gray-800 text-sm">New Calculation</h2>
+                </div>
+                <div class="p-6 space-y-5">
+
+                    <!-- Loan Type Toggle -->
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Loan Type</label>
+                        <div class="flex gap-2">
+                            <button id="btn-mortgage" onclick="setLoanType('mortgage')"
+                                class="flex-1 py-2.5 px-3 rounded-lg text-sm font-semibold border-2 transition-all bg-blue-700 border-blue-700 text-white">
+                                Mortgage
+                            </button>
+                            <button id="btn-simple" onclick="setLoanType('simple')"
+                                class="flex-1 py-2.5 px-3 rounded-lg text-sm font-semibold border-2 transition-all bg-white border-gray-200 text-gray-600 hover:border-gray-300">
+                                Simple Interest
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Inputs -->
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1" for="inp-amount">Loan Amount</label>
+                            <div class="relative">
+                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
+                                <input type="number" id="inp-amount" min="0" step="any" placeholder="300000"
+                                    class="w-full pl-7 pr-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    oninput="onLiveCalc()">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1" for="inp-rate">Annual Interest Rate</label>
+                            <div class="relative">
+                                <input type="number" id="inp-rate" min="0" max="100" step="0.01" placeholder="6.50"
+                                    class="w-full pl-3 pr-8 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    oninput="onLiveCalc()">
+                                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">%</span>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1" for="inp-term">Loan Term</label>
+                                <div class="relative">
+                                    <input type="number" id="inp-term" min="1" max="50" placeholder="30"
+                                        class="w-full pl-3 pr-10 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        oninput="onLiveCalc()">
+                                    <span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-medium">yrs</span>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1" for="inp-fees">
+                                    Fees <span class="text-gray-400 font-normal text-xs">(optional)</span>
+                                </label>
+                                <div class="relative">
+                                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
+                                    <input type="number" id="inp-fees" min="0" step="any" placeholder="0"
+                                        class="w-full pl-7 pr-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        oninput="onLiveCalc()">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Calculate Button -->
+                    <button onclick="calculate(false)"
+                        class="w-full bg-blue-700 hover:bg-blue-800 active:bg-blue-900 text-white font-semibold py-3 rounded-lg text-sm transition-colors">
+                        Calculate APR &amp; Save to History
+                    </button>
+
+                    <!-- Error -->
+                    <div id="ui-error" class="hidden rounded-lg bg-red-50 border border-red-200 px-4 py-3">
+                        <p class="text-red-600 text-sm" id="ui-error-text"></p>
+                    </div>
+
+                    <!-- Results Panel -->
+                    <div id="ui-results" class="hidden space-y-3">
+                        <!-- APR Hero -->
+                        <div class="bg-blue-50 border border-blue-200 rounded-xl p-5 text-center">
+                            <p class="text-xs font-bold text-blue-500 uppercase tracking-widest mb-1">Annual Percentage Rate</p>
+                            <p class="text-5xl font-bold text-blue-700 tabular-nums" id="res-apr">—</p>
+                            <p class="text-xs text-blue-400 mt-2 leading-relaxed" id="res-apr-note"></p>
+                        </div>
+                        <!-- Stats Grid -->
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="bg-gray-50 rounded-lg p-3 text-center">
+                                <p class="text-xs text-gray-500 mb-0.5">Monthly Payment</p>
+                                <p class="text-base font-bold text-gray-800 tabular-nums" id="res-payment">—</p>
+                            </div>
+                            <div class="bg-gray-50 rounded-lg p-3 text-center">
+                                <p class="text-xs text-gray-500 mb-0.5">Total Interest</p>
+                                <p class="text-base font-bold text-gray-800 tabular-nums" id="res-interest">—</p>
+                            </div>
+                            <div class="bg-gray-50 rounded-lg p-3 text-center">
+                                <p class="text-xs text-gray-500 mb-0.5">Total Cost</p>
+                                <p class="text-base font-bold text-gray-800 tabular-nums" id="res-total">—</p>
+                            </div>
+                            <div class="bg-gray-50 rounded-lg p-3 text-center">
+                                <p class="text-xs text-gray-500 mb-0.5">Nominal Rate</p>
+                                <p class="text-base font-bold text-gray-800 tabular-nums" id="res-nominal">—</p>
+                            </div>
+                        </div>
+                        <!-- Export PDF -->
+                        <button onclick="exportCurrentPDF()"
+                            class="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-semibold py-2.5 rounded-lg text-sm transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            Export as PDF
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- HISTORY CARD -->
+            <div class="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col" style="min-height: 400px;">
+                <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 rounded-t-xl flex items-center justify-between flex-shrink-0">
+                    <h2 class="font-semibold text-gray-800 text-sm">Calculation History</h2>
+                    <button id="btn-clear" onclick="clearHistory()"
+                        class="hidden text-xs text-red-400 hover:text-red-600 font-medium transition-colors">
+                        Clear All
+                    </button>
+                </div>
+                <div class="overflow-y-auto flex-1" id="history-scroll" style="max-height: 560px;">
+                    <div id="history-empty" class="flex flex-col items-center justify-center py-16 px-6">
+                        <div class="bg-gray-100 rounded-full p-4 mb-3">
+                            <svg class="w-7 h-7 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                            </svg>
+                        </div>
+                        <p class="text-gray-500 text-sm font-medium">No history yet</p>
+                        <p class="text-gray-400 text-xs mt-1">Click "Calculate APR" to save results here</p>
+                    </div>
+                    <div id="history-list" class="divide-y divide-gray-100"></div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+    // ─── State ─────────────────────────────────────────────────────────────────
+    let loanType = 'mortgage';
+    let lastResult = null;
+
+    // ─── Helpers ───────────────────────────────────────────────────────────────
+    const $ = id => document.getElementById(id);
+
+    function fmt$(n) {
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency', currency: 'USD', minimumFractionDigits: 2
+        }).format(n);
+    }
+
+    function fmtPct(n, decimals = 4) {
+        return n.toFixed(decimals) + '%';
+    }
+
+    // ─── Loan Type UI ──────────────────────────────────────────────────────────
+    function setLoanType(type) {
+        loanType = type;
+        const on  = 'flex-1 py-2.5 px-3 rounded-lg text-sm font-semibold border-2 transition-all bg-blue-700 border-blue-700 text-white';
+        const off = 'flex-1 py-2.5 px-3 rounded-lg text-sm font-semibold border-2 transition-all bg-white border-gray-200 text-gray-600 hover:border-gray-300';
+        $('btn-mortgage').className = type === 'mortgage' ? on : off;
+        $('btn-simple').className   = type === 'simple'   ? on : off;
+        hideError();
+        onLiveCalc();
+    }
+
+    function showError(msg) {
+        $('ui-error-text').textContent = msg;
+        $('ui-error').classList.remove('hidden');
+    }
+    function hideError() { $('ui-error').classList.add('hidden'); }
+    function hideResults() { $('ui-results').classList.add('hidden'); }
+
+    // ─── APR Math ──────────────────────────────────────────────────────────────
+
+    // Newton-Raphson: solve PV = PMT*(1-(1+r)^-n)/r  for monthly rate r
+    function solveRate(PV, PMT, n) {
+        function pv(r) {
+            if (Math.abs(r) < 1e-9) return PMT * n;
+            return PMT * (1 - Math.pow(1 + r, -n)) / r;
+        }
+        function dpv(r) {
+            if (Math.abs(r) < 1e-9) return -PMT * n * (n + 1) / 2;
+            const p = Math.pow(1 + r, -n);
+            return PMT * (n * p / (r * (1 + r)) - (1 - p) / (r * r));
+        }
+        let r = 0.01;
+        for (let i = 0; i < 500; i++) {
+            const f  = pv(r) - PV;
+            const df = dpv(r);
+            if (Math.abs(df) < 1e-15) break;
+            const step = f / df;
+            r -= step;
+            if (r < 1e-9) r = 1e-9;
+            if (Math.abs(step) < 1e-11) break;
+        }
+        return r > 0 ? r : null;
+    }
+
+    function computeMortgage(P, rate, termYears, fees) {
+        const r = rate / 100 / 12;
+        const n = Math.round(termYears * 12);
+        const pmt = r < 1e-10 ? P / n : P * r / (1 - Math.pow(1 + r, -n));
+        const totalInterest = pmt * n - P;
+        const totalCost = pmt * n + fees;
+        let apr = rate;
+        if (fees > 0) {
+            const rm = solveRate(P - fees, pmt, n);
+            if (!rm) return null;
+            apr = rm * 12 * 100;
+        }
+        return { pmt, totalInterest, totalCost, apr, n };
+    }
+
+    function computeSimple(P, rate, termYears, fees) {
+        const n = Math.round(termYears * 12);
+        const totalInterest = P * (rate / 100) * termYears;
+        const pmt = (P + totalInterest) / n;
+        const totalCost = pmt * n + fees;
+        let apr = rate;
+        if (fees > 0) {
+            const rm = solveRate(P - fees, pmt, n);
+            if (!rm) return null;
+            apr = rm * 12 * 100;
+        }
+        return { pmt, totalInterest, totalCost, apr, n };
+    }
+
+    // ─── Calculate & Display ───────────────────────────────────────────────────
+
+    function getInputs() {
+        return {
+            P:    parseFloat($('inp-amount').value),
+            rate: parseFloat($('inp-rate').value),
+            term: parseFloat($('inp-term').value),
+            fees: parseFloat($('inp-fees').value) || 0
+        };
+    }
+
+    function validate({ P, rate, term, fees }) {
+        if (!P    || P <= 0)                  return 'Enter a valid loan amount.';
+        if (!rate || rate <= 0 || rate > 100) return 'Enter a valid annual interest rate (0–100%).';
+        if (!term || term <= 0 || term > 50)  return 'Enter a loan term between 1 and 50 years.';
+        if (fees < 0)                          return 'Fees cannot be negative.';
+        if (fees >= P)                         return 'Fees cannot equal or exceed the loan amount.';
+        return null;
+    }
+
+    function onLiveCalc() {
+        const inputs = getInputs();
+        if (!inputs.P || !inputs.rate || !inputs.term) { hideError(); return; }
+        const err = validate(inputs);
+        if (err) { hideError(); return; }
+        calculate(true);
+    }
+
+    function calculate(silent = false) {
+        hideError();
+        const inputs = getInputs();
+        const err = validate(inputs);
+        if (err) {
+            if (!silent) showError(err);
+            return;
+        }
+
+        const { P, rate, term, fees } = inputs;
+        const res = loanType === 'mortgage'
+            ? computeMortgage(P, rate, term, fees)
+            : computeSimple(P, rate, term, fees);
+
+        if (!res) {
+            if (!silent) showError('APR calculation failed — please check your inputs.');
+            return;
+        }
+
+        const { pmt, totalInterest, totalCost, apr } = res;
+
+        $('res-apr').textContent     = fmtPct(apr, 4);
+        $('res-payment').textContent = fmt$(pmt);
+        $('res-interest').textContent = fmt$(totalInterest);
+        $('res-total').textContent   = fmt$(totalCost);
+        $('res-nominal').textContent = fmtPct(rate, 4);
+        $('res-apr-note').textContent = fees > 0
+            ? `Nominal rate ${fmtPct(rate, 4)} · includes ${fmt$(fees)} in fees`
+            : `Nominal rate equals APR (no fees included)`;
+
+        $('ui-results').classList.remove('hidden');
+
+        lastResult = {
+            loanType, P, rate, term, fees, pmt,
+            totalInterest, totalCost, apr,
+            ts: new Date().toISOString()
+        };
+
+        if (!silent) {
+            saveHistory(lastResult);
+            renderHistory();
+        }
+    }
+
+    // ─── History ───────────────────────────────────────────────────────────────
+
+    function getHistory() {
+        try { return JSON.parse(localStorage.getItem('apr_history_v1') || '[]'); }
+        catch { return []; }
+    }
+
+    function saveHistory(item) {
+        const h = getHistory();
+        h.unshift(item);
+        if (h.length > 100) h.length = 100;
+        localStorage.setItem('apr_history_v1', JSON.stringify(h));
+    }
+
+    function clearHistory() {
+        if (!confirm('Delete all calculation history? This cannot be undone.')) return;
+        localStorage.removeItem('apr_history_v1');
+        renderHistory();
+    }
+
+    function renderHistory() {
+        const h = getHistory();
+        const list  = $('history-list');
+        const empty = $('history-empty');
+        const clr   = $('btn-clear');
+
+        list.innerHTML = '';
+
+        if (h.length === 0) {
+            empty.classList.remove('hidden');
+            clr.classList.add('hidden');
+            return;
+        }
+
+        empty.classList.add('hidden');
+        clr.classList.remove('hidden');
+
+        h.forEach((item, idx) => {
+            const d = new Date(item.ts);
+            const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            const timeStr = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            const typeLabel = item.loanType === 'mortgage' ? 'Mortgage' : 'Simple Interest';
+            const typeBadge = item.loanType === 'mortgage'
+                ? 'bg-blue-100 text-blue-700'
+                : 'bg-violet-100 text-violet-700';
+
+            const el = document.createElement('div');
+            el.className = 'px-5 py-4 hover:bg-gray-50 transition-colors group';
+            el.innerHTML = `
+                <div class="flex items-start gap-3">
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2 mb-1.5">
+                            <span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${typeBadge}">${typeLabel}</span>
+                            <span class="text-gray-400 text-xs">${dateStr} &middot; ${timeStr}</span>
+                        </div>
+                        <div class="flex items-baseline gap-2 mb-1">
+                            <span class="text-sm font-bold text-gray-900">${fmt$(item.P)}</span>
+                            <span class="text-xs text-gray-500">@ ${fmtPct(item.rate, 2)} &middot; ${item.term} yr</span>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs">
+                            <span class="text-gray-500">APR <span class="font-semibold text-blue-600">${fmtPct(item.apr, 3)}</span></span>
+                            <span class="text-gray-300">&bull;</span>
+                            <span class="text-gray-500">${fmt$(item.pmt)}/mo</span>
+                            ${item.fees > 0 ? `<span class="text-gray-300">&bull;</span><span class="text-gray-500">Fees ${fmt$(item.fees)}</span>` : ''}
+                        </div>
+                    </div>
+                    <button onclick="exportHistoryPDF(${idx})" title="Export PDF"
+                        class="flex-shrink-0 mt-0.5 p-1.5 rounded text-gray-300 hover:text-emerald-600 hover:bg-emerald-50 transition-all">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                    </button>
+                </div>
+            `;
+            list.appendChild(el);
+        });
+    }
+
+    // ─── PDF Export ────────────────────────────────────────────────────────────
+
+    function exportCurrentPDF() {
+        if (lastResult) generatePDF(lastResult);
+    }
+
+    function exportHistoryPDF(idx) {
+        const h = getHistory();
+        if (h[idx]) generatePDF(h[idx]);
+    }
+
+    function generatePDF(r) {
+        if (!window.jspdf) {
+            alert('PDF library not loaded. Please check your internet connection and try again.');
+            return;
+        }
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+        const W = 210, M = 20;
+
+        const d = new Date(r.ts);
+        const typeLabel = r.loanType === 'mortgage' ? 'Mortgage' : 'Simple Interest Loan';
+        const dateStr = d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        const timeStr = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+        // ── Header block ──────────────────────────────────────────
+        doc.setFillColor(30, 58, 138);
+        doc.rect(0, 0, W, 40, 'F');
+
+        doc.setFontSize(20);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(255, 255, 255);
+        doc.text('APR Calculator Report', W / 2, 16, { align: 'center' });
+
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(147, 197, 253);
+        doc.text(`${typeLabel}  ·  ${dateStr}  ·  ${timeStr}`, W / 2, 25, { align: 'center' });
+
+        doc.setFontSize(8);
+        doc.setTextColor(96, 165, 250);
+        doc.text('APR Calculator — Personal Finance Tool', W / 2, 34, { align: 'center' });
+
+        // ── APR hero box ──────────────────────────────────────────
+        doc.setFillColor(239, 246, 255);
+        doc.setDrawColor(191, 219, 254);
+        doc.setLineWidth(0.5);
+        doc.roundedRect(M, 48, W - M * 2, 32, 3, 3, 'FD');
+
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(37, 99, 235);
+        doc.text('ANNUAL PERCENTAGE RATE (APR)', W / 2, 57, { align: 'center' });
+
+        doc.setFontSize(30);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(29, 78, 216);
+        doc.text(fmtPct(r.apr, 4), W / 2, 73, { align: 'center' });
+
+        // ── Loan Details ──────────────────────────────────────────
+        let y = 92;
+
+        function sectionHeader(title) {
+            doc.setFontSize(11);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(31, 41, 55);
+            doc.text(title, M, y);
+            y += 2;
+            doc.setDrawColor(209, 213, 219);
+            doc.setLineWidth(0.3);
+            doc.line(M, y, W - M, y);
+            y += 7;
+        }
+
+        function tableRow(label, value, rowIdx, highlight = false) {
+            if (rowIdx % 2 === 0) {
+                doc.setFillColor(248, 250, 252);
+                doc.rect(M, y - 4, W - M * 2, 10, 'F');
+            }
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(107, 114, 128);
+            doc.text(label, M + 4, y + 2);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(highlight ? 29 : 17, highlight ? 78 : 24, highlight ? 216 : 39);
+            doc.text(value, W - M - 4, y + 2, { align: 'right' });
+            y += 10;
+        }
+
+        sectionHeader('Loan Details');
+        [
+            ['Loan Type',             typeLabel],
+            ['Loan Amount',           fmt$(r.P)],
+            ['Annual Interest Rate',  fmtPct(r.rate, 4)],
+            ['Loan Term',             `${r.term} years (${Math.round(r.term * 12)} months)`],
+            ['Fees / Closing Costs',  fmt$(r.fees)],
+        ].forEach(([l, v], i) => tableRow(l, v, i));
+
+        y += 6;
+        sectionHeader('Calculation Results');
+        [
+            ['Monthly Payment',                         fmt$(r.pmt),          false],
+            ['Total Interest Paid',                     fmt$(r.totalInterest), false],
+            ['Total Cost (Principal + Interest + Fees)', fmt$(r.totalCost),    false],
+            ['Nominal Annual Rate',                     fmtPct(r.rate, 4),    false],
+            ['Annual Percentage Rate (APR)',             fmtPct(r.apr, 4),     true],
+        ].forEach(([l, v, hl], i) => tableRow(l, v, i, hl));
+
+        // ── Footer ────────────────────────────────────────────────
+        doc.setFillColor(248, 250, 252);
+        doc.rect(0, 278, W, 19, 'F');
+        doc.setDrawColor(229, 231, 235);
+        doc.setLineWidth(0.3);
+        doc.line(0, 278, W, 278);
+
+        doc.setFontSize(7.5);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(156, 163, 175);
+        doc.text('For informational purposes only. Consult a licensed financial professional before making loan decisions.', W / 2, 285, { align: 'center' });
+        doc.text(`Generated by APR Calculator  ·  Ref: ${r.ts}`, W / 2, 291, { align: 'center' });
+
+        const fn = `APR_${typeLabel.replace(/\s+/g, '_')}_${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}.pdf`;
+        doc.save(fn);
+    }
+
+    // ─── Init ──────────────────────────────────────────────────────────────────
+    renderHistory();
+    </script>
+</body>
+</html>
