@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Happy Face Calculator 😊</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background: linear-gradient(135deg, #fff9c4 0%, #ffe082 50%, #ffd54f 100%);
+      min-height: 100vh;
+    }
+
+    .calc-btn {
+      position: relative;
+      transition: transform 0.1s, box-shadow 0.1s;
+      user-select: none;
+      cursor: pointer;
+    }
+
+    .calc-btn:active {
+      transform: scale(0.93);
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.2) !important;
+    }
+
+    .calc-btn::after {
+      content: attr(data-face);
+      position: absolute;
+      top: 3px;
+      right: 5px;
+      font-size: 9px;
+      opacity: 0.5;
+      pointer-events: none;
+    }
+
+    .display-text {
+      font-family: 'Courier New', monospace;
+    }
+
+    @keyframes pop {
+      0%   { transform: scale(1); }
+      40%  { transform: scale(1.12); }
+      100% { transform: scale(1); }
+    }
+
+    .pop {
+      animation: pop 0.15s ease-out;
+    }
+
+    @keyframes wobble {
+      0%,100% { transform: rotate(0deg); }
+      25%      { transform: rotate(-5deg); }
+      75%      { transform: rotate(5deg); }
+    }
+
+    .face-title {
+      animation: wobble 2.5s ease-in-out infinite;
+      display: inline-block;
+    }
+  </style>
+</head>
+<body class="flex items-center justify-center p-4">
+
+  <div class="w-full max-w-sm">
+    <!-- Title -->
+    <div class="text-center mb-4">
+      <h1 class="text-3xl font-bold text-yellow-700 drop-shadow-sm">
+        <span class="face-title">😄</span>
+        Happy Calc
+        <span class="face-title" style="animation-delay:0.4s">😄</span>
+      </h1>
+      <p class="text-yellow-600 text-sm mt-1">The calculator that loves you back!</p>
+    </div>
+
+    <!-- Calculator body -->
+    <div class="bg-yellow-50 rounded-3xl shadow-2xl border-4 border-yellow-400 overflow-hidden">
+
+      <!-- Display -->
+      <div class="bg-yellow-900 px-5 py-4 rounded-t-2xl mx-3 mt-3 mb-2" style="border-radius:16px;">
+        <div id="expression" class="display-text text-yellow-300 text-right text-sm h-5 overflow-hidden truncate opacity-70">
+          &nbsp;
+        </div>
+        <div id="display" class="display-text text-yellow-100 text-right text-4xl font-bold mt-1 overflow-hidden truncate">
+          0
+        </div>
+      </div>
+
+      <!-- Buttons -->
+      <div class="grid grid-cols-4 gap-2 p-4">
+
+        <!-- Row 1: AC  +/-  %  ÷ -->
+        <button data-face="😅" class="calc-btn col-span-1 bg-orange-400 hover:bg-orange-300 text-white font-bold text-lg rounded-2xl h-16 shadow-md border-b-4 border-orange-600"
+          onclick="pressKey('AC')">
+          AC
+        </button>
+        <button data-face="🙃" class="calc-btn bg-orange-400 hover:bg-orange-300 text-white font-bold text-lg rounded-2xl h-16 shadow-md border-b-4 border-orange-600"
+          onclick="pressKey('+/-')">
+          +/-
+        </button>
+        <button data-face="😏" class="calc-btn bg-orange-400 hover:bg-orange-300 text-white font-bold text-lg rounded-2xl h-16 shadow-md border-b-4 border-orange-600"
+          onclick="pressKey('%')">
+          %
+        </button>
+        <button data-face="😋" class="calc-btn bg-amber-500 hover:bg-amber-400 text-white font-bold text-2xl rounded-2xl h-16 shadow-md border-b-4 border-amber-700"
+          onclick="pressKey('/')">
+          ÷
+        </button>
+
+        <!-- Row 2: 7 8 9 × -->
+        <button data-face="😊" class="calc-btn bg-yellow-300 hover:bg-yellow-200 text-yellow-900 font-bold text-2xl rounded-2xl h-16 shadow-md border-b-4 border-yellow-500"
+          onclick="pressKey('7')">
+          7
+        </button>
+        <button data-face="😁" class="calc-btn bg-yellow-300 hover:bg-yellow-200 text-yellow-900 font-bold text-2xl rounded-2xl h-16 shadow-md border-b-4 border-yellow-500"
+          onclick="pressKey('8')">
+          8
+        </button>
+        <button data-face="🤩" class="calc-btn bg-yellow-300 hover:bg-yellow-200 text-yellow-900 font-bold text-2xl rounded-2xl h-16 shadow-md border-b-4 border-yellow-500"
+          onclick="pressKey('9')">
+          9
+        </button>
+        <button data-face="😜" class="calc-btn bg-amber-500 hover:bg-amber-400 text-white font-bold text-2xl rounded-2xl h-16 shadow-md border-b-4 border-amber-700"
+          onclick="pressKey('*')">
+          ×
+        </button>
+
+        <!-- Row 3: 4 5 6 − -->
+        <button data-face="😀" class="calc-btn bg-yellow-300 hover:bg-yellow-200 text-yellow-900 font-bold text-2xl rounded-2xl h-16 shadow-md border-b-4 border-yellow-500"
+          onclick="pressKey('4')">
+          4
+        </button>
+        <button data-face="😃" class="calc-btn bg-yellow-300 hover:bg-yellow-200 text-yellow-900 font-bold text-2xl rounded-2xl h-16 shadow-md border-b-4 border-yellow-500"
+          onclick="pressKey('5')">
+          5
+        </button>
+        <button data-face="😆" class="calc-btn bg-yellow-300 hover:bg-yellow-200 text-yellow-900 font-bold text-2xl rounded-2xl h-16 shadow-md border-b-4 border-yellow-500"
+          onclick="pressKey('6')">
+          6
+        </button>
+        <button data-face="😝" class="calc-btn bg-amber-500 hover:bg-amber-400 text-white font-bold text-2xl rounded-2xl h-16 shadow-md border-b-4 border-amber-700"
+          onclick="pressKey('-')">
+          −
+        </button>
+
+        <!-- Row 4: 1 2 3 + -->
+        <button data-face="🙂" class="calc-btn bg-yellow-300 hover:bg-yellow-200 text-yellow-900 font-bold text-2xl rounded-2xl h-16 shadow-md border-b-4 border-yellow-500"
+          onclick="pressKey('1')">
+          1
+        </button>
+        <button data-face="😛" class="calc-btn bg-yellow-300 hover:bg-yellow-200 text-yellow-900 font-bold text-2xl rounded-2xl h-16 shadow-md border-b-4 border-yellow-500"
+          onclick="pressKey('2')">
+          2
+        </button>
+        <button data-face="😇" class="calc-btn bg-yellow-300 hover:bg-yellow-200 text-yellow-900 font-bold text-2xl rounded-2xl h-16 shadow-md border-b-4 border-yellow-500"
+          onclick="pressKey('3')">
+          3
+        </button>
+        <button data-face="😄" class="calc-btn bg-amber-500 hover:bg-amber-400 text-white font-bold text-2xl rounded-2xl h-16 shadow-md border-b-4 border-amber-700"
+          onclick="pressKey('+')">
+          +
+        </button>
+
+        <!-- Row 5: 0 (wide) . = -->
+        <button data-face="😶" class="calc-btn col-span-2 bg-yellow-300 hover:bg-yellow-200 text-yellow-900 font-bold text-2xl rounded-2xl h-16 shadow-md border-b-4 border-yellow-500 text-left pl-6"
+          onclick="pressKey('0')">
+          0
+        </button>
+        <button data-face="😬" class="calc-btn bg-yellow-300 hover:bg-yellow-200 text-yellow-900 font-bold text-2xl rounded-2xl h-16 shadow-md border-b-4 border-yellow-500"
+          onclick="pressKey('.')">
+          .
+        </button>
+        <button data-face="🥰" class="calc-btn bg-green-500 hover:bg-green-400 text-white font-bold text-2xl rounded-2xl h-16 shadow-md border-b-4 border-green-700"
+          onclick="pressKey('=')">
+          =
+        </button>
+
+      </div>
+
+      <!-- Happy message bar -->
+      <div id="happy-msg" class="text-center text-yellow-600 text-sm pb-3 h-7 transition-opacity duration-300 opacity-0">
+        😊
+      </div>
+    </div>
+
+    <p class="text-center text-yellow-700 text-xs mt-4 opacity-60">made with 😊 love</p>
+  </div>
+
+  <script>
+    const HAPPY_MSGS = [
+      "Great number! 😄", "You're doing amazing! 🤩", "Math is fun! 😁",
+      "Lookin' good! 😊", "Calculated with love 🥰", "You got this! 💪😄",
+      "Wow, so smart! 🤓😄", "Keep going! 😃", "Numbers are your friend! 😆",
+      "Incredible! 🎉", "Happy calculating! 😋", "Nice one! 😜"
+    ];
+
+    let current = '0';
+    let expression = '';
+    let operator = null;
+    let prevValue = null;
+    let justEvaled = false;
+    let waitingForOperand = false;
+
+    const displayEl = document.getElementById('display');
+    const expressionEl = document.getElementById('expression');
+    const happyMsg = document.getElementById('happy-msg');
+
+    let msgTimer = null;
+
+    function showHappy(text) {
+      if (msgTimer) clearTimeout(msgTimer);
+      happyMsg.textContent = text;
+      happyMsg.classList.remove('opacity-0');
+      happyMsg.classList.add('opacity-100');
+      msgTimer = setTimeout(() => {
+        happyMsg.classList.remove('opacity-100');
+        happyMsg.classList.add('opacity-0');
+      }, 1800);
+    }
+
+    function randomHappy() {
+      return HAPPY_MSGS[Math.floor(Math.random() * HAPPY_MSGS.length)];
+    }
+
+    function updateDisplay() {
+      // shrink font for long numbers
+      const len = current.length;
+      if (len > 10) displayEl.style.fontSize = '1.4rem';
+      else if (len > 7) displayEl.style.fontSize = '2rem';
+      else displayEl.style.fontSize = '2.25rem';
+      displayEl.textContent = current;
+      expressionEl.textContent = expression || ' ';
+    }
+
+    function pressKey(key) {
+      // pop animation on button
+      const btns = document.querySelectorAll('.calc-btn');
+      btns.forEach(b => {
+        if (b.textContent.trim() === key ||
+            (key === '/' && b.textContent.trim() === '÷') ||
+            (key === '*' && b.textContent.trim() === '×') ||
+            (key === '-' && b.textContent.trim() === '−')) {
+          b.classList.add('pop');
+          setTimeout(() => b.classList.remove('pop'), 200);
+        }
+      });
+
+      if (key === 'AC') {
+        current = '0';
+        expression = '';
+        operator = null;
+        prevValue = null;
+        justEvaled = false;
+        waitingForOperand = false;
+        updateDisplay();
+        return;
+      }
+
+      if (key === '+/-') {
+        if (current !== '0') {
+          current = current.startsWith('-') ? current.slice(1) : '-' + current;
+          updateDisplay();
+        }
+        return;
+      }
+
+      if (key === '%') {
+        const val = parseFloat(current);
+        if (!isNaN(val)) {
+          current = String(val / 100);
+          updateDisplay();
+        }
+        return;
+      }
+
+      // Digit or decimal
+      if ('0123456789.'.includes(key)) {
+        if (key === '.' && current.includes('.')) return;
+        if (waitingForOperand || justEvaled) {
+          current = key === '.' ? '0.' : key;
+          waitingForOperand = false;
+          justEvaled = false;
+        } else {
+          current = current === '0' && key !== '.' ? key : current + key;
+        }
+        updateDisplay();
+        showHappy(randomHappy());
+        return;
+      }
+
+      // Operators + - * /
+      if (['+', '-', '*', '/'].includes(key)) {
+        const val = parseFloat(current);
+        if (prevValue !== null && operator && !waitingForOperand) {
+          const result = calculate(prevValue, val, operator);
+          current = formatResult(result);
+          prevValue = result;
+        } else {
+          prevValue = val;
+        }
+        operator = key;
+        const opSymbol = { '+':'+', '-':'−', '*':'×', '/':'÷' }[key];
+        expression = current + ' ' + opSymbol;
+        waitingForOperand = true;
+        justEvaled = false;
+        updateDisplay();
+        return;
+      }
+
+      if (key === '=') {
+        if (operator === null || prevValue === null) return;
+        const val = parseFloat(current);
+        const result = calculate(prevValue, val, operator);
+        expression = expression + ' ' + current + ' =';
+        current = formatResult(result);
+        prevValue = null;
+        operator = null;
+        justEvaled = true;
+        waitingForOperand = false;
+        updateDisplay();
+        showHappy(result === 0 ? 'Zero is a number too! 😅' : randomHappy());
+        return;
+      }
+    }
+
+    function calculate(a, b, op) {
+      switch (op) {
+        case '+': return a + b;
+        case '-': return a - b;
+        case '*': return a * b;
+        case '/': return b === 0 ? NaN : a / b;
+      }
+    }
+
+    function formatResult(n) {
+      if (isNaN(n)) return 'Error 😬';
+      if (!isFinite(n)) return 'Error 😬';
+      // avoid floating point display noise
+      const str = parseFloat(n.toPrecision(12)).toString();
+      return str;
+    }
+
+    // Keyboard support
+    document.addEventListener('keydown', e => {
+      const map = {
+        '0':'0','1':'1','2':'2','3':'3','4':'4',
+        '5':'5','6':'6','7':'7','8':'8','9':'9',
+        '.':'.', '+':'+', '-':'-', '*':'*', '/':'/',
+        'Enter':'=', '=':'=', 'Backspace':'AC', 'Escape':'AC'
+      };
+      if (map[e.key]) {
+        e.preventDefault();
+        pressKey(map[e.key]);
+      }
+    });
+
+    updateDisplay();
+  </script>
+</body>
+</html>
