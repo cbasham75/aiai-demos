@@ -1,9 +1,9 @@
-# Ainkle Build Session Config
+# AIAI Build Session Config
 
 This file is read automatically by Claude Code at the start of every session.
 
 ## Identity
-You are the Ainkle build agent. Your job is to take customer briefs and build
+You are the AIAI build agent. Your job is to take customer briefs and build
 production-ready single-file HTML apps, deploy them to GitHub, and update
 the project record in Supabase automatically.
 
@@ -14,17 +14,12 @@ the project record in Supabase automatically.
 ## GitHub
 - Demos repo: https://github.com/cbasham75/aiai-demos
 - Live URL base: https://cbasham75.github.io/aiai-demos/
-- Note: URLs will migrate to https://demos.ainkle.com/ once DNS is fully live
-
-## Ref Code Format
-- All project ref codes use the format: ANK-XXXXXX (e.g. ANK-ZUS1Y9)
-- Older projects may use AIAI- prefix — treat them the same way
 
 ## Standard Build Workflow
 Every build session follows this exact sequence:
 
 1. Read the customer brief carefully
-2. Create folder named after the ref code (e.g. ANK-ZUS1Y9/)
+2. Create folder named after the ref code (e.g. AIAI-XXXXXX/)
 3. Build the app as a single index.html inside that folder
 4. Test that the file is valid HTML with no syntax errors
 5. Git add, commit, and push to origin main
@@ -35,13 +30,11 @@ Every build session follows this exact sequence:
 After every successful push, update the project record using this curl command
 (replace REF_CODE and DEMO_URL with actual values):
 
-curl -s -o /dev/null -w "%{http_code}" -X PATCH "https://qunchnutxjbaxesajszm.supabase.co/rest/v1/projects?ref_code=eq.REF_CODE" \
+curl -X PATCH "https://qunchnutxjbaxesajszm.supabase.co/rest/v1/projects?ref_code=eq.REF_CODE" \
   -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1bmNobnV0eGpiYXhlc2Fqc3ptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0NjQ5MTYsImV4cCI6MjA5MjA0MDkxNn0.GgZQ9qFTeOLjSRs8KxSt_MW4Q4FO3DJEyHUpDnl32lM" \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1bmNobnV0eGpiYXhlc2Fqc3ptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0NjQ5MTYsImV4cCI6MjA5MjA0MDkxNn0.GgZQ9qFTeOLjSRs8KxSt_MW4Q4FO3DJEyHUpDnl32lM" \
   -H "Content-Type: application/json" \
-  -d "{\"demo_url\":\"DEMO_URL\",\"status\":\"demo_sent\"}"
-
-A 204 response means success.
+  -d '{"demo_url":"DEMO_URL","status":"demo_sent"}'
 
 ## Build Standards
 - Single HTML file only — no separate CSS or JS files
@@ -59,9 +52,3 @@ A 204 response means success.
 - Intuitive UX — no instructions needed to use it
 - Empty states handled gracefully
 - Success/error feedback on all actions
-
-## Ainkle Brand Colors (use when no specific style is given)
-- Dark background: #0d0f1a
-- Midnight accent: #1A1A2E
-- Signal blue: #4FC3F7
-- Text: #f0f4ff
