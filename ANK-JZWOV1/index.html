@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Marketing Activity Tracker — Connection Home Lending</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { background: #0d0f1a; color: #f0f4ff; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+    .card { background: #1A1A2E; border: 1px solid #2d3060; border-radius: 12px; }
+    .btn-primary { background: #4FC3F7; color: #0d0f1a; font-weight: 600; transition: background 0.15s; }
+    .btn-primary:hover { background: #29b6f6; }
+    .input-field { background: #0d0f1a; border: 1px solid #2d3060; color: #f0f4ff; transition: border-color 0.15s; }
+    .input-field:focus { border-color: #4FC3F7; outline: none; box-shadow: 0 0 0 3px rgba(79,195,247,0.1); }
+    .input-field::placeholder { color: #4a5568; }
+    select.input-field option { background: #1A1A2E; color: #f0f4ff; }
+    .badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 9999px; font-size: 0.7rem; font-weight: 600; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0d0f1a; }
+    ::-webkit-scrollbar-thumb { background: #2d3060; border-radius: 3px; }
+    .tab-btn { border-bottom: 2px solid transparent; transition: color 0.15s, border-color 0.15s; }
+    .tab-active { border-bottom-color: #4FC3F7 !important; color: #4FC3F7 !important; }
+    .fade-in { animation: fadeIn 0.2s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+    .toast { animation: slideIn 0.2s ease; }
+    @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+  </style>
+</head>
+<body class="min-h-screen">
+<div id="app"></div>
+
+<script>
+// ══════════════════════════════════════════════
+//  DATA LAYER
+// ══════════════════════════════════════════════
+const DB = {
+  init() {
+    if (!localStorage.getItem('mmg_v1_init')) this.seed();
+  },
+  seed() {
+    const users = [
+      { id: 'lo1',  username: 'sjohnson',  password: 'demo1234', name: 'Sarah Johnson', role: 'lo',       podId: 'pod1', email: 'sjohnson@connectionhomelending.com' },
+      { id: 'lo2',  username: 'mdavis',    password: 'demo1234', name: 'Mike Davis',    role: 'lo',       podId: 'pod2', email: 'mdavis@connectionhomelending.com'   },
+      { id: 'm1',   username: 'amartinez', password: 'demo1234', name: 'Alex Martinez', role: 'marketer', podId: 'pod1', email: 'amartinez@connectionhomelending.com' },
+      { id: 'm2',   username: 'jlee',      password: 'demo1234', name: 'Jamie Lee',     role: 'marketer', podId: 'pod1', email: 'jlee@connectionhomelending.com'      },
+      { id: 'm3',   username: 'cbrown',    password: 'demo1234', name: 'Casey Brown',   role: 'marketer', podId: 'pod1', email: 'cbrown@connectionhomelending.com'    },
+      { id: 'm4',   username: 'tsmith',    password: 'demo1234', name: 'Taylor Smith',  role: 'marketer', podId: 'pod2', email: 'tsmith@connectionhomelending.com'    },
+      { id: 'm5',   username: 'rwilson',   password: 'demo1234', name: 'Riley Wilson',  role: 'marketer', podId: 'pod2', email: 'rwilson@connectionhomelending.com'   },
+    ];
+    const pods = [
+      { id: 'pod1', name: 'Pod Alpha', loId: 'lo1' },
+      { id: 'pod2', name: 'Pod Beta',  loId: 'lo2' },
+    ];
+    const ago = n => { const d = new Date(); d.setDate(d.getDate()-n); return d.toISOString().split('T')[0]; };
+    const activities = [
+      { id:'a1', marketerId:'m1', activityType:'branded_gear',  date:ago(1),  timeSpent:60,  notes:'Wore company polo to Chamber of Commerce meeting. Great visibility.',
+        leads:[{ id:'l1', name:'David Kim',     phone:'615-555-0101', email:'dkim@email.com',     notes:'Interested in refinancing. Owns rental property in Green Hills.', needsFollowUp:true,  followedUp:false }] },
+      { id:'a2', marketerId:'m1', activityType:'social_media',  date:ago(1),  timeSpent:45,  notes:'Posted home buying tips reel on Instagram & Facebook. Boosted post $25.',
+        leads:[] },
+      { id:'a3', marketerId:'m1', activityType:'client_calls',  date:ago(2),  timeSpent:90,  notes:'Called 12 past contacts from referral list. Left voicemails for 7.',
+        leads:[{ id:'l2', name:'Maria Santos',  phone:'615-555-0202', email:'msantos@email.com',  notes:'First-time buyer, looking to purchase in 3-6 months. Pre-approval needed.',  needsFollowUp:true,  followedUp:false }] },
+      { id:'a4', marketerId:'m2', activityType:'events',        date:ago(2),  timeSpent:180, notes:'Booth at Nashville Home Expo. Distributed 200 branded brochures and pens.',
+        leads:[{ id:'l3', name:'James Carter',  phone:'615-555-0303', email:'jcarter@email.com',  notes:'Wants to buy in 60 days. Needs pre-approval asap — strong income.',            needsFollowUp:true,  followedUp:false },
+               { id:'l4', name:'Emily Park',    phone:'615-555-0404', email:'epark@email.com',    notes:'Relocating from Chicago, dual income HH. Very motivated buyer.',               needsFollowUp:true,  followedUp:false }] },
+      { id:'a5', marketerId:'m2', activityType:'charitable',    date:ago(3),  timeSpent:120, notes:'Volunteered at Nashville Habitat for Humanity build day. Wore branded gear.',
+        leads:[] },
+      { id:'a6', marketerId:'m3', activityType:'emails',        date:ago(1),  timeSpent:60,  notes:'Sent monthly newsletter to 250-contact list. 18% open rate, 4 replies.',
+        leads:[] },
+      { id:'a7', marketerId:'m3', activityType:'social_media',  date:ago(4),  timeSpent:30,  notes:'LinkedIn article on current rate trends. 340 impressions.',
+        leads:[] },
+      { id:'a8', marketerId:'m4', activityType:'branded_gear',  date:ago(1),  timeSpent:60,  notes:'Dropped off branded pens and notepads at 3 local real estate offices.',
+        leads:[{ id:'l5', name:'Tom Reynolds',  phone:'615-555-0505', email:'treynolds@email.com', notes:'Agent referral. Client looking for jumbo loan, $900k purchase.',               needsFollowUp:true,  followedUp:false }] },
+      { id:'a9', marketerId:'m5', activityType:'client_calls',  date:ago(2),  timeSpent:75,  notes:'Follow-up calls to leads from last month\'s open house event.',
+        leads:[{ id:'l6', name:'Priya Nair',    phone:'615-555-0606', email:'pnair@email.com',    notes:'Ready to move forward. Wants 30-yr fixed. Self-employed — needs bank stmts.', needsFollowUp:true,  followedUp:false }] },
+    ];
+    localStorage.setItem('mmg_v1_users', JSON.stringify(users));
+    localStorage.setItem('mmg_v1_pods', JSON.stringify(pods));
+    localStorage.setItem('mmg_v1_activities', JSON.stringify(activities));
+    localStorage.setItem('mmg_v1_init', '1');
+  },
+  users()       { return JSON.parse(localStorage.getItem('mmg_v1_users') || '[]'); },
+  pods()        { return JSON.parse(localStorage.getItem('mmg_v1_pods') || '[]'); },
+  activities()  { return JSON.parse(localStorage.getItem('mmg_v1_activities') || '[]'); },
+  saveActs(a)   { localStorage.setItem('mmg_v1_activities', JSON.stringify(a)); },
+  login(u,p)    { return this.users().find(x => x.username===u && x.password===p) || null; },
+  userById(id)  { return this.users().find(u => u.id===id); },
+  podById(id)   { return this.pods().find(p => p.id===id); },
+  podForLO(loId){ return this.pods().find(p => p.loId===loId); },
+  podMarketers(podId) { return this.users().filter(u => u.role==='marketer' && u.podId===podId); },
+  actsForMarketer(mid) { return this.activities().filter(a => a.marketerId===mid); },
+  actsForPod(podId) {
+    const ids = this.podMarketers(podId).map(m=>m.id);
+    return this.activities().filter(a => ids.includes(a.marketerId));
+  },
+  addActivity(act)    { const a=this.activities(); a.push(act); this.saveActs(a); },
+  updateActivity(id, upd) {
+    const a=this.activities(), i=a.findIndex(x=>x.id===id);
+    if(i>=0){ a[i]={...a[i],...upd}; this.saveActs(a); }
+  },
+  deleteActivity(id)  { this.saveActs(this.activities().filter(a=>a.id!==id)); },
+  markLeadFollowed(actId, leadId, done) {
+    const acts=this.activities(), act=acts.find(a=>a.id===actId);
+    if(act){ const l=act.leads.find(l=>l.id===leadId); if(l){l.followedUp=done; this.saveActs(acts);} }
+  },
+};
+
+// ══════════════════════════════════════════════
+//  CONSTANTS
+// ══════════════════════════════════════════════
+const TYPES = [
+  { id:'branded_gear',  label:'Branded Gear',          icon:'👔', pill:'bg-purple-950 text-purple-300 border-purple-800' },
+  { id:'social_media',  label:'Social Media',           icon:'📱', pill:'bg-sky-950 text-sky-300 border-sky-800'         },
+  { id:'events',        label:'Events',                 icon:'🎪', pill:'bg-amber-950 text-amber-300 border-amber-800'   },
+  { id:'charitable',    label:'Charitable / Service',   icon:'❤️', pill:'bg-rose-950 text-rose-300 border-rose-800'      },
+  { id:'client_calls',  label:'Client Calls',           icon:'📞', pill:'bg-emerald-950 text-emerald-300 border-emerald-800'},
+  { id:'emails',        label:'Emails',                 icon:'📧', pill:'bg-indigo-950 text-indigo-300 border-indigo-800'},
+];
+const typeById = id => TYPES.find(t=>t.id===id) || { label:id, icon:'📋', pill:'bg-gray-800 text-gray-300 border-gray-700' };
+const uid  = () => Date.now().toString(36) + Math.random().toString(36).substr(2,5);
+const fmtDate = s => { if(!s) return ''; const d=new Date(s+'T12:00:00'); return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); };
+const fmtMins = m => { const h=Math.floor(m/60),r=m%60; return h&&r?`${h}h ${r}m`:h?`${h}h`:`${r}m`; };
+const weekRange = () => {
+  const n=new Date(), d=n.getDay();
+  const s=new Date(n); s.setDate(n.getDate()-d);
+  const e=new Date(s); e.setDate(s.getDate()+6);
+  return { start:s.toISOString().split('T')[0], end:e.toISOString().split('T')[0] };
+};
+const inRange = (date,from,to) => (!from||date>=from) && (!to||date<=to);
+const todayStr = () => new Date().toISOString().split('T')[0];
+const initials = name => name.split(' ').map(n=>n[0]).join('');
+
+// ══════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════
+let S = {
+  user: null,
+  view: 'login',
+  tab: 'dashboard',
+  filter: { mid:'', type:'', from:'', to:'' },
+  form: { type:'', date:todayStr(), hours:'0', mins:'30', notes:'', leads:[] },
+  leadDraft: { name:'', phone:'', email:'', notes:'', followUp:true },
+  showLeadForm: false,
+  editId: null,
+  toast: null,
+};
+
+// ══════════════════════════════════════════════
+//  RENDER ENGINE
+// ══════════════════════════════════════════════
+function render() {
+  const app = document.getElementById('app');
+  app.innerHTML = S.view==='login' ? tLogin() : S.view==='marketer' ? tMarketer() : tLO();
+  bind();
+}
+
+function toast(msg, type='ok') {
+  S.toast = { msg, type };
+  render();
+  setTimeout(() => { S.toast=null; render(); }, 3200);
+}
+
+function tToast() {
+  if (!S.toast) return '';
+  const ok = S.toast.type==='ok';
+  return `<div class="toast fixed top-4 right-4 z-50 px-5 py-3 rounded-xl text-sm font-semibold shadow-2xl border"
+    style="${ok?'background:#052e16;color:#4ade80;border-color:#166534':'background:#450a0a;color:#f87171;border-color:#991b1b'}">
+    ${ok?'✓':'✕'} ${S.toast.msg}</div>`;
+}
+
+// ══════════════════════════════════════════════
+//  LOGIN
+// ══════════════════════════════════════════════
+function tLogin() {
+  return `<div class="min-h-screen flex flex-col items-center justify-center px-4">
+    ${tToast()}
+    <div class="w-full max-w-sm">
+      <div class="text-center mb-8">
+        <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4" style="background:#1A1A2E;border:1px solid #2d3060">
+          <span class="text-3xl">🏠</span>
+        </div>
+        <h1 class="text-2xl font-bold text-white">Marketing Activity Tracker</h1>
+        <p class="text-sm mt-1" style="color:#8892b0">Connection Home Lending</p>
+      </div>
+      <div class="card p-6 fade-in">
+        <div class="mb-4">
+          <label class="block text-xs font-semibold mb-2 uppercase tracking-wide" style="color:#8892b0">Username</label>
+          <input id="lu" type="text" class="input-field w-full px-4 py-3 rounded-lg text-sm" placeholder="Enter your username" value="sjohnson">
+        </div>
+        <div class="mb-6">
+          <label class="block text-xs font-semibold mb-2 uppercase tracking-wide" style="color:#8892b0">Password</label>
+          <input id="lp" type="password" class="input-field w-full px-4 py-3 rounded-lg text-sm" placeholder="Enter your password" value="demo1234">
+        </div>
+        <button id="btn-login" class="btn-primary w-full py-3 rounded-xl text-sm">Sign In →</button>
+        <div class="mt-5 p-4 rounded-xl text-xs" style="background:#0d0f1a;border:1px solid #2d3060">
+          <p class="font-bold mb-2" style="color:#4FC3F7">Demo Accounts — all use password: <span class="text-white font-mono">demo1234</span></p>
+          <p class="mb-1"><span style="color:#8892b0">Loan Officers:</span> <span class="text-white font-mono">sjohnson</span> · <span class="text-white font-mono">mdavis</span></p>
+          <p><span style="color:#8892b0">Marketers:</span> <span class="text-white font-mono">amartinez</span> · <span class="font-mono text-white">jlee</span> · <span class="font-mono text-white">cbrown</span> · <span class="font-mono text-white">tsmith</span> · <span class="font-mono text-white">rwilson</span></p>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ══════════════════════════════════════════════
+//  SHARED COMPONENTS
+// ══════════════════════════════════════════════
+function tHeader(user, pod, tabs, loName) {
+  return `<header class="sticky top-0 z-40" style="background:#1A1A2E;border-bottom:1px solid #2d3060">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg flex items-center justify-center text-base" style="background:#0d0f1a">🏠</div>
+        <div>
+          <div class="font-semibold text-sm text-white leading-tight">${user.name}</div>
+          <div class="text-xs leading-tight" style="color:#8892b0">${user.role==='lo'?'Loan Officer':'Marketer'} · ${pod?.name||'—'}</div>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        ${loName ? `<span class="text-xs hidden sm:block" style="color:#8892b0">LO: <span style="color:#4FC3F7">${loName}</span></span>` : ''}
+        <button id="btn-logout" class="text-xs px-3 py-1.5 rounded-lg font-medium" style="background:#0d0f1a;color:#8892b0;border:1px solid #2d3060">Sign Out</button>
+      </div>
+    </div>
+    <div class="max-w-6xl mx-auto px-4 flex overflow-x-auto" style="scrollbar-width:none">
+      ${tabs.map(([id,label]) => `<button data-tab="${id}" class="tab-btn px-4 py-3 text-sm font-medium whitespace-nowrap ${S.tab===id?'tab-active text-sky-400':'text-gray-500 hover:text-gray-300'}">${label}</button>`).join('')}
+    </div>
+  </header>`;
+}
+
+function tStatCard(top, label, val, icon, color) {
+  return `<div class="card p-4">
+    <div class="flex items-start justify-between">
+      <div>
+        <p class="text-xs mb-1 leading-tight" style="color:#8892b0">${top}</p>
+        <p class="text-xs mb-1 leading-tight" style="color:#8892b0">${label}</p>
+        <p class="text-2xl font-bold mt-1" style="color:${color}">${val}</p>
+      </div>
+      <span class="text-2xl opacity-80">${icon}</span>
+    </div>
+  </div>`;
+}
+
+function tTypePill(typeId) {
+  const t = typeById(typeId);
+  return `<span class="badge border ${t.pill}" style="font-size:0.65rem">${t.icon} ${t.label}</span>`;
+}
+
+function tEmptyState(icon, title, sub, btnLabel, btnTab) {
+  return `<div class="card p-16 text-center fade-in">
+    <div class="text-5xl mb-4">${icon}</div>
+    <p class="text-white font-semibold mb-1">${title}</p>
+    <p class="text-sm mb-5" style="color:#8892b0">${sub}</p>
+    ${btnLabel ? `<button data-tab="${btnTab}" class="tab-btn btn-primary px-6 py-2.5 rounded-xl text-sm">${btnLabel}</button>` : ''}
+  </div>`;
+}
+
+// ══════════════════════════════════════════════
+//  MARKETER VIEW
+// ══════════════════════════════════════════════
+function tMarketer() {
+  const user = S.user, pod = DB.podById(user.podId), lo = DB.userById(pod?.loId);
+  const tabs = [['dashboard','Dashboard'],['log','Log Activity'],['activities','My Activities'],['leads','My Leads']];
+  let body = '';
+  if (S.tab==='dashboard')   body = tMarketerDash();
+  else if (S.tab==='log')    body = tLogForm();
+  else if (S.tab==='activities') body = tMarketerActs();
+  else if (S.tab==='leads')  body = tMarketerLeads();
+  return `<div class="min-h-screen" style="background:#0d0f1a">
+    ${tToast()}
+    ${tHeader(user, pod, tabs, lo?.name)}
+    <main class="max-w-6xl mx-auto px-4 py-6 fade-in">${body}</main>
+  </div>`;
+}
+
+function tMarketerDash() {
+  const user = S.user;
+  const acts = DB.actsForMarketer(user.id).sort((a,b)=>b.date.localeCompare(a.date));
+  const wk = weekRange();
+  const wkActs = acts.filter(a=>inRange(a.date,wk.start,wk.end));
+  const allLeads = acts.reduce((s,a)=>s+a.leads.length,0);
+  const wkLeads  = wkActs.reduce((s,a)=>s+a.leads.length,0);
+  const allMins  = acts.reduce((s,a)=>s+(a.timeSpent||0),0);
+  const wkMins   = wkActs.reduce((s,a)=>s+(a.timeSpent||0),0);
+  const byType   = Object.fromEntries(TYPES.map(t=>[t.id,0]));
+  acts.forEach(a=>{ if(byType[a.activityType]!==undefined) byType[a.activityType]++; });
+  const maxT = Math.max(...Object.values(byType), 1);
+  const recent = acts.slice(0,5);
+
+  return `
+  <div>
+    <h2 class="text-xl font-bold text-white mb-0.5">My Dashboard</h2>
+    <p class="text-sm mb-6" style="color:#8892b0">Current week: ${fmtDate(wk.start)} – ${fmtDate(wk.end)}</p>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      ${tStatCard('This Week','Activities',  wkActs.length, '📋','#4FC3F7')}
+      ${tStatCard('This Week','Hours',       fmtMins(wkMins),'⏱','#a78bfa')}
+      ${tStatCard('This Week','Leads',       wkLeads,       '🎯','#34d399')}
+      ${tStatCard('All Time', 'Total',       acts.length,   '📊','#fb923c')}
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Activity Breakdown -->
+      <div class="card p-5">
+        <h3 class="font-semibold text-white mb-4">Activity Breakdown (All Time)</h3>
+        <div class="space-y-3">
+          ${TYPES.map(t => {
+            const count = byType[t.id]||0;
+            const pct = Math.round(count/maxT*100);
+            return `<div>
+              <div class="flex justify-between text-sm mb-1">
+                <span class="text-white">${t.icon} ${t.label}</span>
+                <span style="color:#8892b0">${count}</span>
+              </div>
+              <div class="h-1.5 rounded-full" style="background:#0d0f1a">
+                <div class="h-1.5 rounded-full transition-all" style="background:#4FC3F7;width:${pct}%"></div>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+
+      <!-- Recent Activity -->
+      <div class="card p-5">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-semibold text-white">Recent Activity</h3>
+          <button data-tab="activities" class="tab-btn text-xs" style="color:#4FC3F7">View All →</button>
+        </div>
+        ${recent.length
+          ? recent.map(a => tActRow(a)).join('')
+          : tEmptyState('📋','No activities yet','Log your first marketing activity to start tracking.','Log Activity','log')}
+      </div>
+    </div>
+  </div>`;
+}
+
+function tActRow(a, showMarketer=false) {
+  const t = typeById(a.activityType);
+  const m = showMarketer ? DB.userById(a.marketerId) : null;
+  return `<div class="flex items-start gap-3 py-3 border-b last:border-0" style="border-color:#2d3060">
+    <span class="text-lg mt-0.5 flex-shrink-0">${t.icon}</span>
+    <div class="flex-1 min-w-0">
+      <div class="flex flex-wrap items-center gap-2 mb-0.5">
+        <span class="text-sm font-medium text-white">${t.label}</span>
+        ${m ? `<span class="text-xs px-2 py-0.5 rounded-full" style="background:#1e2d3d;color:#4FC3F7">${m.name}</span>` : ''}
+        <span class="text-xs" style="color:#8892b0">${fmtDate(a.date)} · ⏱ ${fmtMins(a.timeSpent||0)}</span>
+        ${a.leads.length ? `<span class="text-xs" style="color:#34d399">🎯 ${a.leads.length} lead${a.leads.length>1?'s':''}</span>` : ''}
+      </div>
+      ${a.notes ? `<p class="text-xs truncate" style="color:#8892b0">${a.notes}</p>` : ''}
+    </div>
+  </div>`;
+}
+
+// ══════════════════════════════════════════════
+//  LOG FORM
+// ══════════════════════════════════════════════
+function tLogForm() {
+  const f = S.form;
+  const isEdit = !!S.editId;
+  return `
+  <div class="max-w-2xl">
+    <h2 class="text-xl font-bold text-white mb-6">${isEdit?'Edit Activity':'Log New Activity'}</h2>
+    <div class="card p-6">
+
+      <!-- Activity Type -->
+      <div class="mb-6">
+        <label class="block text-xs font-semibold mb-3 uppercase tracking-wide" style="color:#8892b0">Activity Type <span style="color:#ef4444">*</span></label>
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          ${TYPES.map(t => `
+            <label class="flex items-center gap-2 p-3 rounded-xl cursor-pointer border-2 transition-all" style="${f.type===t.id?'border-color:#4FC3F7;background:#0d1929':'border-color:#2d3060;background:#0d0f1a'}">
+              <input type="radio" name="atype" value="${t.id}" class="hidden" ${f.type===t.id?'checked':''}>
+              <span class="text-lg">${t.icon}</span>
+              <span class="text-xs font-medium text-white leading-tight">${t.label}</span>
+            </label>`).join('')}
+        </div>
+      </div>
+
+      <!-- Date -->
+      <div class="mb-5">
+        <label class="block text-xs font-semibold mb-2 uppercase tracking-wide" style="color:#8892b0">Date <span style="color:#ef4444">*</span></label>
+        <input id="f-date" type="date" class="input-field w-full px-4 py-3 rounded-xl text-sm" value="${f.date}" max="${todayStr()}">
+      </div>
+
+      <!-- Time Spent -->
+      <div class="mb-5">
+        <label class="block text-xs font-semibold mb-2 uppercase tracking-wide" style="color:#8892b0">Time Spent <span style="color:#ef4444">*</span></label>
+        <div class="flex gap-3">
+          <select id="f-hours" class="input-field flex-1 px-4 py-3 rounded-xl text-sm">
+            ${Array.from({length:13},(_,i)=>`<option value="${i}" ${f.hours==i?'selected':''}>${i} hr${i!==1?'s':''}</option>`).join('')}
+          </select>
+          <select id="f-mins" class="input-field flex-1 px-4 py-3 rounded-xl text-sm">
+            ${[0,15,30,45].map(m=>`<option value="${m}" ${f.mins==m?'selected':''}>${m} min</option>`).join('')}
+          </select>
+        </div>
+      </div>
+
+      <!-- Notes -->
+      <div class="mb-6">
+        <label class="block text-xs font-semibold mb-2 uppercase tracking-wide" style="color:#8892b0">Notes</label>
+        <textarea id="f-notes" rows="3" placeholder="Describe the activity, outcomes, reach, observations…" class="input-field w-full px-4 py-3 rounded-xl text-sm resize-none">${f.notes}</textarea>
+      </div>
+
+      <!-- Leads -->
+      <div class="mb-7">
+        <div class="flex items-center justify-between mb-3">
+          <label class="text-xs font-semibold uppercase tracking-wide" style="color:#8892b0">Leads / Inquiries <span class="normal-case font-normal">(optional)</span></label>
+          <button id="btn-add-lead" class="text-xs px-3 py-1.5 rounded-lg font-semibold" style="background:#0d1929;color:#4FC3F7;border:1px solid #4FC3F7">+ Add Lead</button>
+        </div>
+        ${S.showLeadForm ? tLeadMiniForm() : ''}
+        ${f.leads.length ? `<div class="space-y-2 mt-2">
+          ${f.leads.map((l,i) => `
+            <div class="flex items-start gap-3 p-3 rounded-xl" style="background:#0d0f1a;border:1px solid #2d3060">
+              <div class="flex-1 min-w-0">
+                <div class="font-semibold text-sm text-white">${l.name}</div>
+                <div class="text-xs mt-0.5" style="color:#8892b0">${[l.phone,l.email].filter(Boolean).join(' · ')}</div>
+                ${l.notes ? `<div class="text-xs mt-1" style="color:#8892b0">${l.notes}</div>` : ''}
+                ${l.followUp ? `<div class="text-xs mt-1" style="color:#f59e0b">⚡ Needs LO follow-up</div>` : ''}
+              </div>
+              <button data-rm-lead="${i}" class="text-base leading-none flex-shrink-0" style="color:#6b7280">✕</button>
+            </div>`).join('')}
+        </div>` : ''}
+      </div>
+
+      <!-- Actions -->
+      <div class="flex gap-3">
+        <button id="btn-save" class="btn-primary flex-1 py-3 rounded-xl text-sm">${isEdit?'Update Activity':'Save Activity'}</button>
+        ${isEdit ? `<button id="btn-cancel-edit" class="px-5 py-3 rounded-xl text-sm font-medium" style="background:#0d0f1a;color:#8892b0;border:1px solid #2d3060">Cancel</button>` : ''}
+      </div>
+    </div>
+  </div>`;
+}
+
+function tLeadMiniForm() {
+  const ld = S.leadDraft;
+  return `<div class="p-4 rounded-xl mb-3" style="background:#0d1929;border:2px solid #4FC3F7">
+    <p class="text-sm font-semibold text-white mb-3">New Lead / Inquiry</p>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+      <input id="ld-name"  type="text"   placeholder="Full Name *"  class="input-field px-3 py-2.5 rounded-lg text-sm" value="${ld.name}">
+      <input id="ld-phone" type="tel"    placeholder="Phone"         class="input-field px-3 py-2.5 rounded-lg text-sm" value="${ld.phone}">
+      <input id="ld-email" type="email"  placeholder="Email"         class="input-field px-3 py-2.5 rounded-lg text-sm" value="${ld.email}">
+      <label class="flex items-center gap-2 cursor-pointer">
+        <input id="ld-fu" type="checkbox" ${ld.followUp?'checked':''} class="w-4 h-4 rounded accent-sky-400">
+        <span class="text-sm font-medium" style="color:#f59e0b">Needs LO follow-up</span>
+      </label>
+    </div>
+    <textarea id="ld-notes" rows="2" placeholder="Notes about this lead…" class="input-field w-full px-3 py-2.5 rounded-lg text-sm resize-none mb-3">${ld.notes}</textarea>
+    <div class="flex gap-2">
+      <button id="btn-confirm-lead" class="btn-primary px-4 py-2 rounded-lg text-xs">Add Lead</button>
+      <button id="btn-cancel-lead"  class="px-4 py-2 rounded-lg text-xs font-medium" style="background:#0d0f1a;color:#8892b0;border:1px solid #2d3060">Cancel</button>
+    </div>
+  </div>`;
+}
+
+function tMarketerActs() {
+  const acts = DB.actsForMarketer(S.user.id).sort((a,b)=>b.date.localeCompare(a.date));
+  return `<div>
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="text-xl font-bold text-white">My Activities</h2>
+      <button data-tab="log" class="tab-btn btn-primary px-4 py-2 rounded-xl text-sm">+ Log Activity</button>
+    </div>
+    ${acts.length ? `<div class="card overflow-hidden">
+      ${acts.map(a => `
+        <div class="flex items-start gap-3 px-5 py-4 border-b last:border-0" style="border-color:#2d3060">
+          <span class="text-lg mt-0.5 flex-shrink-0">${typeById(a.activityType).icon}</span>
+          <div class="flex-1 min-w-0">
+            <div class="flex flex-wrap items-center gap-2 mb-1">
+              <span class="text-sm font-semibold text-white">${typeById(a.activityType).label}</span>
+              ${tTypePill(a.activityType)}
+              <span class="text-xs" style="color:#8892b0">${fmtDate(a.date)} · ⏱ ${fmtMins(a.timeSpent||0)}</span>
+              ${a.leads.length ? `<span class="text-xs" style="color:#34d399">🎯 ${a.leads.length} lead${a.leads.length>1?'s':''}</span>` : ''}
+            </div>
+            ${a.notes ? `<p class="text-xs" style="color:#8892b0">${a.notes}</p>` : ''}
+          </div>
+          <div class="flex gap-1.5 flex-shrink-0">
+            <button data-edit="${a.id}" class="text-xs px-2.5 py-1.5 rounded-lg" style="background:#0d1929;color:#4FC3F7;border:1px solid #1e3a5f">Edit</button>
+            <button data-del="${a.id}"  class="text-xs px-2.5 py-1.5 rounded-lg" style="background:#1a0a0a;color:#ef4444;border:1px solid #3f1010">Del</button>
+          </div>
+        </div>`).join('')}
+    </div>`
+    : tEmptyState('📋','No activities yet','Start logging your marketing activities to build your history.','Log Your First Activity','log')}
+  </div>`;
+}
+
+function tLeadCards(leads, showMarketer=false, showDoneBtn=true) {
+  return leads.map(l => `
+    <div class="px-5 py-4 border-b last:border-0" style="border-color:#2d3060">
+      <div class="flex items-start justify-between gap-3">
+        <div class="flex-1 min-w-0">
+          <div class="flex flex-wrap items-center gap-2 mb-1">
+            <span class="font-semibold text-white text-sm">${l.name}</span>
+            ${l.needsFollowUp&&!l.followedUp ? `<span class="badge" style="background:#451a03;color:#f59e0b;border:1px solid #78350f">Needs Follow-Up</span>`
+              : `<span class="badge" style="background:#052e16;color:#4ade80;border:1px solid #166534">Done</span>`}
+          </div>
+          <div class="text-xs" style="color:#8892b0">${[l.phone,l.email].filter(Boolean).join(' · ')}</div>
+          ${l.notes ? `<div class="text-xs mt-1" style="color:#a0aec0">${l.notes}</div>` : ''}
+          <div class="flex flex-wrap gap-3 mt-1">
+            <span class="text-xs" style="color:#8892b0">${typeById(l.activityType).icon} ${typeById(l.activityType).label} · ${fmtDate(l.date)}</span>
+            ${showMarketer&&l.marketerName ? `<span class="text-xs" style="color:#4FC3F7">by ${l.marketerName}</span>` : ''}
+          </div>
+        </div>
+        ${showDoneBtn&&l.needsFollowUp&&!l.followedUp
+          ? `<button data-mark="${l.activityId}" data-lid="${l.id}" class="text-xs px-3 py-1.5 rounded-lg flex-shrink-0 font-medium" style="background:#052e16;color:#4ade80;border:1px solid #166534">Mark Done</button>`
+          : ''}
+      </div>
+    </div>`).join('');
+}
+
+function tMarketerLeads() {
+  const acts = DB.actsForMarketer(S.user.id);
+  const leads = [];
+  acts.forEach(a => a.leads.forEach(l => leads.push({...l, activityId:a.id, activityType:a.activityType, date:a.date})));
+  const pending = leads.filter(l=>l.needsFollowUp&&!l.followedUp);
+  const done    = leads.filter(l=>!l.needsFollowUp||l.followedUp);
+  return `<div>
+    <h2 class="text-xl font-bold text-white mb-6">My Leads & Inquiries</h2>
+    ${!leads.length ? tEmptyState('🎯','No leads captured yet','Add leads when logging activities to track inquiries for LO follow-up.','') : `
+      ${pending.length ? `<div class="mb-6">
+        <h3 class="text-xs font-bold uppercase tracking-wide mb-3" style="color:#f59e0b">⚡ Needs Follow-Up (${pending.length})</h3>
+        <div class="card overflow-hidden">${tLeadCards(pending)}</div>
+      </div>` : ''}
+      ${done.length ? `<div>
+        <h3 class="text-xs font-bold uppercase tracking-wide mb-3" style="color:#8892b0">✓ Completed (${done.length})</h3>
+        <div class="card overflow-hidden">${tLeadCards(done, false, false)}</div>
+      </div>` : ''}
+    `}
+  </div>`;
+}
+
+// ══════════════════════════════════════════════
+//  LO VIEW
+// ══════════════════════════════════════════════
+function tLO() {
+  const user = S.user, pod = DB.podForLO(user.id);
+  const tabs = [['overview','Pod Overview'],['activities','Activity Feed'],['leads','Leads'],['report','Reports']];
+  let body = '';
+  if (S.tab==='overview')    body = tLOOverview();
+  else if (S.tab==='activities') body = tLOActivities();
+  else if (S.tab==='leads')  body = tLOLeads();
+  else if (S.tab==='report') body = tLOReport();
+  return `<div class="min-h-screen" style="background:#0d0f1a">
+    ${tToast()}
+    ${tHeader(user, pod, tabs, '')}
+    <main class="max-w-6xl mx-auto px-4 py-6 fade-in">${body}</main>
+  </div>`;
+}
+
+function tLOOverview() {
+  const pod = DB.podForLO(S.user.id);
+  if (!pod) return `<div class="card p-12 text-center"><p style="color:#8892b0">No pod assigned to your account.</p></div>`;
+  const mkts = DB.podMarketers(pod.id);
+  const acts = DB.actsForPod(pod.id);
+  const wk   = weekRange();
+  const wkActs = acts.filter(a=>inRange(a.date,wk.start,wk.end));
+  const allLeads = acts.reduce((s,a)=>s+a.leads.length,0);
+  const pending  = acts.reduce((s,a)=>s+a.leads.filter(l=>l.needsFollowUp&&!l.followedUp).length,0);
+
+  return `<div>
+    <h2 class="text-xl font-bold text-white mb-0.5">${pod.name} Overview</h2>
+    <p class="text-sm mb-6" style="color:#8892b0">Current week: ${fmtDate(wk.start)} – ${fmtDate(wk.end)}</p>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      ${tStatCard('This Week','Activities',wkActs.length,'📋','#4FC3F7')}
+      ${tStatCard('This Week','Hours',fmtMins(wkActs.reduce((s,a)=>s+(a.timeSpent||0),0)),'⏱','#a78bfa')}
+      ${tStatCard('All Time','Total Leads',allLeads,'🎯','#34d399')}
+      ${tStatCard('Pending','LO Follow-ups',pending,'⚡','#f59e0b')}
+    </div>
+    <h3 class="text-xs font-bold uppercase tracking-wide mb-4" style="color:#8892b0">Team Members (${mkts.length})</h3>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      ${mkts.map(m => {
+        const mActs = acts.filter(a=>a.marketerId===m.id);
+        const mWk   = mActs.filter(a=>inRange(a.date,wk.start,wk.end));
+        const mLd   = mActs.reduce((s,a)=>s+a.leads.length,0);
+        const mPend = mActs.reduce((s,a)=>s+a.leads.filter(l=>l.needsFollowUp&&!l.followedUp).length,0);
+        const last  = [...mActs].sort((a,b)=>b.date.localeCompare(a.date))[0];
+        return `<div class="card p-5">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold flex-shrink-0" style="background:#1e2d3d;color:#4FC3F7">${initials(m.name)}</div>
+            <div class="min-w-0">
+              <div class="font-semibold text-white text-sm truncate">${m.name}</div>
+              <div class="text-xs" style="color:#8892b0">Last: ${last?fmtDate(last.date):'No activity'}</div>
+            </div>
+          </div>
+          <div class="grid grid-cols-3 gap-2">
+            <div class="text-center p-2.5 rounded-xl" style="background:#0d0f1a">
+              <div class="text-xl font-bold" style="color:#4FC3F7">${mWk.length}</div>
+              <div class="text-xs" style="color:#8892b0">This Wk</div>
+            </div>
+            <div class="text-center p-2.5 rounded-xl" style="background:#0d0f1a">
+              <div class="text-xl font-bold" style="color:#34d399">${mLd}</div>
+              <div class="text-xs" style="color:#8892b0">Leads</div>
+            </div>
+            <div class="text-center p-2.5 rounded-xl" style="background:#0d0f1a">
+              <div class="text-xl font-bold" style="color:#f59e0b">${mPend}</div>
+              <div class="text-xs" style="color:#8892b0">Pending</div>
+            </div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>`;
+}
+
+function tLOActivities() {
+  const pod = DB.podForLO(S.user.id);
+  if (!pod) return '';
+  const mkts = DB.podMarketers(pod.id);
+  const f = S.filter;
+  let acts = DB.actsForPod(pod.id).sort((a,b)=>b.date.localeCompare(a.date));
+  if (f.mid)  acts = acts.filter(a=>a.marketerId===f.mid);
+  if (f.type) acts = acts.filter(a=>a.activityType===f.type);
+  acts = acts.filter(a=>inRange(a.date,f.from,f.to));
+
+  return `<div>
+    <h2 class="text-xl font-bold text-white mb-6">Activity Feed</h2>
+    <div class="card p-4 mb-6">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+        <select id="fi-mid"  class="input-field px-3 py-2.5 rounded-xl text-sm">
+          <option value="">All Marketers</option>
+          ${mkts.map(m=>`<option value="${m.id}" ${f.mid===m.id?'selected':''}>${m.name}</option>`).join('')}
+        </select>
+        <select id="fi-type" class="input-field px-3 py-2.5 rounded-xl text-sm">
+          <option value="">All Types</option>
+          ${TYPES.map(t=>`<option value="${t.id}" ${f.type===t.id?'selected':''}>${t.icon} ${t.label}</option>`).join('')}
+        </select>
+        <input id="fi-from" type="date" class="input-field px-3 py-2.5 rounded-xl text-sm" value="${f.from}" placeholder="From">
+        <input id="fi-to"   type="date" class="input-field px-3 py-2.5 rounded-xl text-sm" value="${f.to}"   placeholder="To">
+      </div>
+      <div class="flex gap-2">
+        <button id="btn-filter"  class="btn-primary px-4 py-2 rounded-lg text-xs">Apply</button>
+        <button id="btn-clrfilt" class="px-4 py-2 rounded-lg text-xs font-medium" style="background:#0d0f1a;color:#8892b0;border:1px solid #2d3060">Clear</button>
+      </div>
+    </div>
+    <p class="text-xs mb-3" style="color:#8892b0">${acts.length} ${acts.length===1?'activity':'activities'}</p>
+    ${acts.length ? `<div class="card overflow-hidden">
+      ${acts.map(a => {
+        const m = DB.userById(a.marketerId);
+        return `<div class="flex items-start gap-3 px-5 py-4 border-b last:border-0" style="border-color:#2d3060">
+          <span class="text-lg mt-0.5 flex-shrink-0">${typeById(a.activityType).icon}</span>
+          <div class="flex-1 min-w-0">
+            <div class="flex flex-wrap items-center gap-2 mb-1">
+              <span class="text-sm font-semibold text-white">${typeById(a.activityType).label}</span>
+              <span class="text-xs px-2 py-0.5 rounded-full" style="background:#1e2d3d;color:#4FC3F7">${m?.name||'—'}</span>
+              <span class="text-xs" style="color:#8892b0">${fmtDate(a.date)} · ⏱ ${fmtMins(a.timeSpent||0)}</span>
+              ${a.leads.length ? `<span class="text-xs" style="color:#34d399">🎯 ${a.leads.length} lead${a.leads.length>1?'s':''}</span>` : ''}
+            </div>
+            ${a.notes ? `<p class="text-xs" style="color:#8892b0">${a.notes}</p>` : ''}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`
+    : tEmptyState('🔍','No activities match your filters','Try adjusting or clearing your filters to see more results.','')}
+  </div>`;
+}
+
+function tLOLeads() {
+  const pod = DB.podForLO(S.user.id);
+  if (!pod) return '';
+  const acts = DB.actsForPod(pod.id);
+  const leads = [];
+  acts.forEach(a => {
+    const m = DB.userById(a.marketerId);
+    a.leads.forEach(l => leads.push({...l, activityId:a.id, activityType:a.activityType, date:a.date, marketerName:m?.name||'—'}));
+  });
+  const pending = leads.filter(l=>l.needsFollowUp&&!l.followedUp);
+  const done    = leads.filter(l=>!l.needsFollowUp||l.followedUp);
+
+  return `<div>
+    <h2 class="text-xl font-bold text-white mb-6">Pod Leads & Inquiries</h2>
+    ${!leads.length ? tEmptyState('🎯','No leads captured yet','Leads will appear here when marketers log them with their activities.','') : `
+      ${pending.length ? `<div class="mb-6">
+        <h3 class="text-xs font-bold uppercase tracking-wide mb-3" style="color:#f59e0b">⚡ Needs Your Follow-Up (${pending.length})</h3>
+        <div class="card overflow-hidden">${tLeadCards(pending, true, true)}</div>
+      </div>` : `<div class="card p-5 mb-6 text-center">
+        <p class="text-2xl mb-2">✓</p>
+        <p class="text-sm font-semibold text-white">All caught up!</p>
+        <p class="text-xs mt-1" style="color:#8892b0">No pending follow-ups at this time.</p>
+      </div>`}
+      ${done.length ? `<div>
+        <h3 class="text-xs font-bold uppercase tracking-wide mb-3" style="color:#8892b0">✓ Completed (${done.length})</h3>
+        <div class="card overflow-hidden">${tLeadCards(done, true, false)}</div>
+      </div>` : ''}
+    `}
+  </div>`;
+}
+
+function tLOReport() {
+  const pod = DB.podForLO(S.user.id);
+  if (!pod) return '';
+  const mkts = DB.podMarketers(pod.id);
+  const acts = DB.actsForPod(pod.id);
+  const wk   = weekRange();
+  const byType = Object.fromEntries(TYPES.map(t=>[t.id,{count:0,mins:0}]));
+  acts.forEach(a => { if(byType[a.activityType]){ byType[a.activityType].count++; byType[a.activityType].mins+=(a.timeSpent||0); } });
+  const maxCount = Math.max(...Object.values(byType).map(v=>v.count), 1);
+  const byMkt = mkts.map(m => {
+    const ma = acts.filter(a=>a.marketerId===m.id);
+    return { ...m, total:ma.length, week:ma.filter(a=>inRange(a.date,wk.start,wk.end)).length, leads:ma.reduce((s,a)=>s+a.leads.length,0), mins:ma.reduce((s,a)=>s+(a.timeSpent||0),0) };
+  }).sort((a,b)=>b.total-a.total);
+
+  return `<div>
+    <h2 class="text-xl font-bold text-white mb-6">Pod Reports</h2>
+    <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+      ${tStatCard('All Time','Activities',acts.length,'📋','#4FC3F7')}
+      ${tStatCard('All Time','Hours',fmtMins(acts.reduce((s,a)=>s+(a.timeSpent||0),0)),'⏱','#a78bfa')}
+      ${tStatCard('All Time','Leads',acts.reduce((s,a)=>s+a.leads.length,0),'🎯','#34d399')}
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Type Breakdown -->
+      <div class="card p-5">
+        <h3 class="font-semibold text-white mb-4">Activity by Type</h3>
+        <div class="space-y-3">
+          ${TYPES.map(t => {
+            const d = byType[t.id];
+            const pct = Math.round(d.count/maxCount*100);
+            return `<div>
+              <div class="flex justify-between text-sm mb-1">
+                <span class="text-white">${t.icon} ${t.label}</span>
+                <span style="color:#8892b0">${d.count} · ${fmtMins(d.mins)}</span>
+              </div>
+              <div class="h-1.5 rounded-full" style="background:#0d0f1a">
+                <div class="h-1.5 rounded-full" style="background:#4FC3F7;width:${pct}%"></div>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+
+      <!-- Marketer Performance -->
+      <div class="card p-5">
+        <h3 class="font-semibold text-white mb-4">Marketer Performance</h3>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead><tr class="text-xs uppercase tracking-wide" style="color:#8892b0;border-bottom:1px solid #2d3060">
+              <th class="text-left pb-3 pr-3">Marketer</th>
+              <th class="text-right pb-3 pr-3">This Wk</th>
+              <th class="text-right pb-3 pr-3">Total</th>
+              <th class="text-right pb-3 pr-3">Hours</th>
+              <th class="text-right pb-3">Leads</th>
+            </tr></thead>
+            <tbody>
+              ${byMkt.map((m,i) => `<tr style="border-bottom:1px solid #2d3060" class="last:border-0">
+                <td class="py-3 pr-3">
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs w-5 h-5 rounded flex items-center justify-center font-bold flex-shrink-0" style="background:#1e2d3d;color:#4FC3F7">${i+1}</span>
+                    <span class="font-medium text-white">${m.name}</span>
+                  </div>
+                </td>
+                <td class="py-3 pr-3 text-right font-semibold" style="color:#4FC3F7">${m.week}</td>
+                <td class="py-3 pr-3 text-right text-white">${m.total}</td>
+                <td class="py-3 pr-3 text-right" style="color:#a78bfa">${fmtMins(m.mins)}</td>
+                <td class="py-3 text-right" style="color:#34d399">${m.leads}</td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ══════════════════════════════════════════════
+//  EVENT BINDING
+// ══════════════════════════════════════════════
+function bind() {
+  // Login
+  const btnLogin = document.getElementById('btn-login');
+  if (btnLogin) {
+    const doLogin = () => {
+      const u = document.getElementById('lu').value.trim();
+      const p = document.getElementById('lp').value.trim();
+      const user = DB.login(u, p);
+      if (user) {
+        S.user = user;
+        S.view = user.role==='lo' ? 'lo' : 'marketer';
+        S.tab  = user.role==='lo' ? 'overview' : 'dashboard';
+        S.filter = { mid:'', type:'', from:'', to:'' };
+        render();
+      } else {
+        toast('Invalid username or password.', 'err');
+      }
+    };
+    btnLogin.addEventListener('click', doLogin);
+    document.getElementById('lp').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+  }
+
+  // Logout
+  const btnLogout = document.getElementById('btn-logout');
+  if (btnLogout) btnLogout.addEventListener('click', () => {
+    S.user=null; S.view='login'; S.tab='dashboard';
+    S.form={type:'',date:todayStr(),hours:'0',mins:'30',notes:'',leads:[]};
+    S.editId=null; S.showLeadForm=false;
+    render();
+  });
+
+  // Tabs
+  document.querySelectorAll('[data-tab]').forEach(el => {
+    el.addEventListener('click', () => {
+      const tab = el.getAttribute('data-tab');
+      S.tab = tab;
+      if (tab==='log' && !S.editId) {
+        S.form = {type:'',date:todayStr(),hours:'0',mins:'30',notes:'',leads:[]};
+        S.showLeadForm = false;
+      }
+      render();
+    });
+  });
+
+  // Activity type radios
+  document.querySelectorAll('input[name="atype"]').forEach(r => {
+    r.addEventListener('change', () => { S.form.type=r.value; render(); });
+  });
+
+  // Form fields (read on save, but update state on blur to keep draft)
+  const bind1 = (id, setter) => { const el=document.getElementById(id); if(el) { el.addEventListener('change', ()=>setter(el.value)); el.addEventListener('input', ()=>setter(el.value)); } };
+  bind1('f-date',  v => S.form.date=v);
+  bind1('f-hours', v => S.form.hours=v);
+  bind1('f-mins',  v => S.form.mins=v);
+  bind1('f-notes', v => S.form.notes=v);
+
+  // Add lead
+  const btnAddLead = document.getElementById('btn-add-lead');
+  if (btnAddLead) btnAddLead.addEventListener('click', () => {
+    S.showLeadForm=true;
+    S.leadDraft={name:'',phone:'',email:'',notes:'',followUp:true};
+    render();
+  });
+
+  // Lead draft fields
+  const bindLd = (id, setter) => { const el=document.getElementById(id); if(el) el.addEventListener('input', ()=>setter(el.value)); };
+  bindLd('ld-name',  v => S.leadDraft.name=v);
+  bindLd('ld-phone', v => S.leadDraft.phone=v);
+  bindLd('ld-email', v => S.leadDraft.email=v);
+  bindLd('ld-notes', v => S.leadDraft.notes=v);
+  const ldFu = document.getElementById('ld-fu');
+  if (ldFu) ldFu.addEventListener('change', () => S.leadDraft.followUp=ldFu.checked);
+
+  // Confirm lead
+  const btnConfirmLead = document.getElementById('btn-confirm-lead');
+  if (btnConfirmLead) btnConfirmLead.addEventListener('click', () => {
+    if (!S.leadDraft.name.trim()) { toast('Lead name is required.','err'); return; }
+    S.form.leads.push({...S.leadDraft, id:uid(), needsFollowUp:S.leadDraft.followUp, followedUp:false});
+    S.showLeadForm=false;
+    render();
+  });
+
+  // Cancel lead
+  const btnCancelLead = document.getElementById('btn-cancel-lead');
+  if (btnCancelLead) btnCancelLead.addEventListener('click', () => { S.showLeadForm=false; render(); });
+
+  // Remove lead from form
+  document.querySelectorAll('[data-rm-lead]').forEach(btn => {
+    btn.addEventListener('click', () => { S.form.leads.splice(parseInt(btn.getAttribute('data-rm-lead')),1); render(); });
+  });
+
+  // Save / Update activity
+  const btnSave = document.getElementById('btn-save');
+  if (btnSave) btnSave.addEventListener('click', () => {
+    // Capture latest DOM values
+    ['f-date','f-hours','f-mins','f-notes'].forEach(id => {
+      const el=document.getElementById(id); if(!el) return;
+      if(id==='f-date')  S.form.date=el.value;
+      if(id==='f-hours') S.form.hours=el.value;
+      if(id==='f-mins')  S.form.mins=el.value;
+      if(id==='f-notes') S.form.notes=el.value;
+    });
+    if (!S.form.type)  { toast('Please select an activity type.','err'); return; }
+    const total = (parseInt(S.form.hours)||0)*60 + (parseInt(S.form.mins)||0);
+    if (!total)        { toast('Please enter time spent.','err'); return; }
+    if (!S.form.date)  { toast('Please select a date.','err'); return; }
+    const payload = { activityType:S.form.type, date:S.form.date, timeSpent:total, notes:S.form.notes, leads:S.form.leads };
+    if (S.editId) {
+      DB.updateActivity(S.editId, payload);
+      S.editId=null; S.tab='activities';
+      toast('Activity updated!');
+    } else {
+      DB.addActivity({id:uid(), marketerId:S.user.id, ...payload});
+      S.form={type:'',date:todayStr(),hours:'0',mins:'30',notes:'',leads:[]};
+      toast('Activity logged!');
+    }
+    render();
+  });
+
+  // Cancel edit
+  const btnCancelEdit = document.getElementById('btn-cancel-edit');
+  if (btnCancelEdit) btnCancelEdit.addEventListener('click', () => { S.editId=null; S.tab='activities'; render(); });
+
+  // Edit activity
+  document.querySelectorAll('[data-edit]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const a = DB.activities().find(x=>x.id===btn.getAttribute('data-edit'));
+      if (!a) return;
+      S.editId=a.id;
+      S.form = { type:a.activityType, date:a.date, hours:String(Math.floor((a.timeSpent||0)/60)), mins:String((a.timeSpent||0)%60), notes:a.notes||'', leads:[...a.leads] };
+      S.tab='log'; S.showLeadForm=false;
+      render();
+    });
+  });
+
+  // Delete activity
+  document.querySelectorAll('[data-del]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (!confirm('Delete this activity?')) return;
+      DB.deleteActivity(btn.getAttribute('data-del'));
+      toast('Activity deleted.');
+      render();
+    });
+  });
+
+  // Mark lead as followed up
+  document.querySelectorAll('[data-mark]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      DB.markLeadFollowed(btn.getAttribute('data-mark'), btn.getAttribute('data-lid'), true);
+      toast('Lead marked as followed up!');
+      render();
+    });
+  });
+
+  // LO Filters
+  const btnFilter = document.getElementById('btn-filter');
+  if (btnFilter) btnFilter.addEventListener('click', () => {
+    S.filter = {
+      mid:  document.getElementById('fi-mid').value,
+      type: document.getElementById('fi-type').value,
+      from: document.getElementById('fi-from').value,
+      to:   document.getElementById('fi-to').value,
+    };
+    render();
+  });
+  const btnClrFilt = document.getElementById('btn-clrfilt');
+  if (btnClrFilt) btnClrFilt.addEventListener('click', () => { S.filter={mid:'',type:'',from:'',to:''}; render(); });
+}
+
+// ══════════════════════════════════════════════
+//  BOOT
+// ══════════════════════════════════════════════
+DB.init();
+render();
+</script>
+</body>
+</html>
